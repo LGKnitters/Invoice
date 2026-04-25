@@ -28,7 +28,7 @@ function SlipContent({ data, qrUrl, tableRef }) {
       </div>
       <div className="slip-meta">
         <span>HSN Code: {data.hsnCode}</span>
-        <span>Date &amp; Time of Dispatch: {formatDateTime(data.dispatchDateTime)}</span>
+        <span style={{paddingBottom: '2px'}}>Date &amp; Time of Dispatch: {formatDateTime(data.dispatchDateTime)}</span>
       </div>
       <div className="table-wrap" ref={tableRef}>
       <table className="slip-table">

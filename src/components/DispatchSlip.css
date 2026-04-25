@@ -121,6 +121,7 @@
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  border: none;
 }
 
 .slip-table td {
@@ -164,7 +165,7 @@
 
 .dest-label-border { border-bottom: 0.5px solid #000 !important; }
 
-.table-wrap { outline: 0.5px solid #000; }
+.table-wrap { }
 
 
 .grey-italic {

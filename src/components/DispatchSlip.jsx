@@ -19,7 +19,7 @@ const V = ({ children, colSpan, nowrap }) => (
   <td className={`cell-value${nowrap ? ' nowrap' : ''}`} colSpan={colSpan}>{children}</td>
 )
 
-function SlipContent({ data, qrUrl }) {
+function SlipContent({ data, qrUrl, tableRef }) {
   return (
     <div className="slip-content">
       <div className="slip-header">
@@ -30,7 +30,7 @@ function SlipContent({ data, qrUrl }) {
         <span>HSN Code: {data.hsnCode}</span>
         <span>Date &amp; Time of Dispatch: {formatDateTime(data.dispatchDateTime)}</span>
       </div>
-      <div className="table-wrap">
+      <div className="table-wrap" ref={tableRef}>
       <table className="slip-table">
         <colgroup>
           <col style={{ width: '22%' }} />
@@ -142,6 +142,8 @@ function SlipContent({ data, qrUrl }) {
 
 export default function DispatchSlip({ data, onEdit }) {
   const slipRef = useRef()
+  const tableRef1 = useRef()
+  const tableRef2 = useRef()
   const [qrUrl, setQrUrl] = useState('')
   const [pdfLoading, setPdfLoading] = useState(false)
 
@@ -162,10 +164,9 @@ export default function DispatchSlip({ data, onEdit }) {
     setPdfLoading(true)
     try {
       const el = slipRef.current
-      const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: '#fff' })
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#fff' })
       const imgData = canvas.toDataURL('image/png')
       const margin = 10
-      // Use actual content dimensions — no padding to page height
       const pxToMm = 25.4 / 96
       const contentW = el.offsetWidth * pxToMm + margin * 2
       const contentH = el.offsetHeight * pxToMm + margin * 2
@@ -173,6 +174,22 @@ export default function DispatchSlip({ data, onEdit }) {
       const usableW = contentW - margin * 2
       const imgH = (canvas.height * usableW) / canvas.width
       pdf.addImage(imgData, 'PNG', margin, margin, usableW, imgH)
+
+      // Draw thick outer border on both tables directly in PDF
+      const elRect = el.getBoundingClientRect()
+      const scale = usableW / el.offsetWidth
+      ;[tableRef1, tableRef2].forEach(ref => {
+        if (!ref.current) return
+        const r = ref.current.getBoundingClientRect()
+        const x = margin + (r.left - elRect.left) * pxToMm * (usableW / (el.offsetWidth * pxToMm))
+        const y = margin + (r.top  - elRect.top)  * pxToMm * (usableW / (el.offsetWidth * pxToMm))
+        const w = r.width  * pxToMm * (usableW / (el.offsetWidth * pxToMm))
+        const h = r.height * pxToMm * (usableW / (el.offsetWidth * pxToMm))
+        pdf.setDrawColor(0, 0, 0)
+        pdf.setLineWidth(0.3)
+        pdf.rect(x, y, w, h, 'S')
+      })
+
       pdf.save(`${data.serialNo}.pdf`)
     } finally {
       setPdfLoading(false)
@@ -189,9 +206,9 @@ export default function DispatchSlip({ data, onEdit }) {
       </div>
 
       <div ref={slipRef} className="slip-print-area">
-        <SlipContent data={data} qrUrl={qrUrl} />
+        <SlipContent data={data} qrUrl={qrUrl} tableRef={tableRef1} />
         <div className="slip-divider" />
-        <SlipContent data={data} qrUrl={qrUrl} />
+        <SlipContent data={data} qrUrl={qrUrl} tableRef={tableRef2} />
       </div>
     </div>
   )
